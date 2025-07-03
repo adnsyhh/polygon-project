@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  backend:
+    build:
+      context: ./polygon-backend
+    container_name: polygon-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_NAME=polygon_db
+      - DB_HOST=host.docker.internal
+    networks:
+      - polygon-network
+
+  frontend:
+    build:
+      context: ./polygon-mapper
+    container_name: polygon-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - polygon-network
+
+networks:
+  polygon-network:
+    driver: bridge
