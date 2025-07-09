@@ -21,6 +21,10 @@ export default defineNuxtConfig({
           src: "https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js",
           defer: true,
         },
+        {
+          src: "https://unpkg.com/leaflet-geometryutil@0.10.0/src/leaflet.geometryutil.js",
+          defer: true,
+        },
       ],
     },
   },

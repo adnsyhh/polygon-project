@@ -3,12 +3,14 @@
   <pre style="margin-top: 1rem; background: #eee; padding: 1rem">
     {{ coordinates }}
   </pre>
+  <p style="margin-top: 10px"><strong>Luas:</strong> {{ areaText }}</p>
 </template>
 
 <script setup>
 import { onMounted, ref } from "vue";
 
 const coordinates = ref([]);
+const areaText = ref("");
 
 onMounted(async () => {
   if (typeof window === "undefined") return;
@@ -84,6 +86,19 @@ onMounted(async () => {
 
     const geojson = layer.toGeoJSON();
     coordinates.value = geojson.geometry.coordinates;
+
+    // ✅ Hitung luas polygon (meter persegi ke hektar)
+    let totalArea = 0;
+    drawnItems.eachLayer((layer) => {
+      if (layer instanceof L.Polygon) {
+        const latlngs = layer.getLatLngs()[0];
+        totalArea += L.GeometryUtil.geodesicArea(latlngs);
+      }
+    });
+    const areaInHectare = (totalArea / 10000).toFixed(2);
+
+    areaText.value = `${areaInHectare} hektar`;
+    alert(`Luas area: ${areaText.value}`);
 
     try {
       await fetch("http://localhost:3001/api/polygons", {
