@@ -13,6 +13,8 @@ services:
       - DB_HOST=host.docker.internal
     networks:
       - polygon-network
+    volumes:
+      - ./polygon-backend/uploads:/app/uploads
 
   frontend:
     build:
