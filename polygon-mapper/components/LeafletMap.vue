@@ -32,6 +32,22 @@
     />
     <button type="submit">Upload SHP</button>
   </form>
+  <div v-if="address || regionInfo" style="margin-top: 2rem">
+    <h3>📍 Informasi Lokasi dari SHP</h3>
+    <p><strong>Provinsi:</strong> {{ address?.state }}</p>
+    <p>
+      <strong>Kota/Kabupaten:</strong> {{ address?.city || address?.county }}
+    </p>
+    <p>
+      <strong>Kecamatan:</strong>
+      {{ address?.suburb || address?.city_district }}
+    </p>
+    <p><strong>Kelurahan:</strong> {{ address?.village || "-" }}</p>
+
+    <h3>🗺️ Data Region (PostgreSQL)</h3>
+    <p><strong>Region ID:</strong> {{ regionInfo?.region_id }}</p>
+    <p><strong>Nama Wilayah:</strong> {{ regionInfo?.nama }}</p>
+  </div>
 </template>
 
 <script setup>
@@ -43,6 +59,8 @@ const areaText = ref("");
 const shapefileData = ref({ shp: null, shx: null, dbf: null });
 const map = ref(null); // Disimpan agar bisa dipakai lintas fungsi
 const drawnItems = ref(null); // Untuk menyimpan layer gambar
+const address = ref(null); // Data lokasi hasil reverse geocode
+const regionInfo = ref(null); // Data region dari PostgreSQL
 
 // Fungsi saat user mengganti file
 function onFileChange(event, type) {
@@ -70,7 +88,10 @@ async function uploadShapefile() {
     }
 
     const resData = await res.json();
-    const { geojson } = resData;
+    const { geojson, address: locInfo, region } = resData;
+
+    address.value = locInfo;
+    regionInfo.value = region;
 
     if (!geojson || !geojson.features || geojson.features.length === 0) {
       alert("Tidak ada data di dalam SHP.");

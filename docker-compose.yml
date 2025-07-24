@@ -6,11 +6,10 @@ services:
     container_name: polygon-backend
     ports:
       - "3001:3001"
-    environment:
-      - DB_USER=root
-      - DB_PASSWORD=
-      - DB_NAME=polygon_db
-      - DB_HOST=host.docker.internal
+    env_file:
+      - .env
+    depends_on:
+      - postgres
     networks:
       - polygon-network
     volumes:
@@ -27,6 +26,25 @@ services:
     networks:
       - polygon-network
 
+  postgres:
+    image: postgres:14
+    container_name: polygon-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 15maret2004
+      POSTGRES_DB: region_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - polygon-network
+
 networks:
   polygon-network:
     driver: bridge
+
+volumes:
+  postgres_data:
