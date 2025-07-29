@@ -16,7 +16,7 @@ app.use(express.json());
 // Routing utama
 app.use("/api/polygons", polygonRoutes); // untuk GET/POST polygon
 app.use("/api/export", exportRoutes); // untuk download SHP
-app.use("/api/upload-shp", uploadShapefile);
+app.use("/api/upload-zip", uploadShapefile);
 
 // Optional: Health check
 app.get("/", (req, res) => {

@@ -11,7 +11,7 @@ async function reverseGeocode(lat, lon) {
         addressdetails: 1,
       },
       headers: {
-        "User-Agent": "polygon-mapper/1.0 (youremail@example.com)", // ubah email kalau mau
+        "User-Agent": "polygon-mapper/1.0 (adnansyah26@gmail.com.com)", 
       },
     });
 

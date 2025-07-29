@@ -12,25 +12,12 @@
   >
     <input
       type="file"
-      name="shp"
-      accept=".shp"
-      @change="onFileChange($event, 'shp')"
+      name="zip"
+      accept=".zip"
+      @change="onFileChange"
       required
     />
-    <input
-      type="file"
-      name="shx"
-      accept=".shx"
-      @change="onFileChange($event, 'shx')"
-    />
-    <input
-      type="file"
-      name="dbf"
-      accept=".dbf"
-      @change="onFileChange($event, 'dbf')"
-      required
-    />
-    <button type="submit">Upload SHP</button>
+    <button type="submit">Upload ZIP</button>
   </form>
   <div v-if="address || regionInfo" style="margin-top: 2rem">
     <h3>📍 Informasi Lokasi dari SHP</h3>
@@ -63,19 +50,19 @@ const address = ref(null); // Data lokasi hasil reverse geocode
 const regionInfo = ref(null); // Data region dari PostgreSQL
 
 // Fungsi saat user mengganti file
-function onFileChange(event, type) {
-  shapefileData.value[type] = event.target.files[0];
+const zipFile = ref(null);
+
+function onFileChange(event) {
+  zipFile.value = event.target.files[0];
 }
 
 // Fungsi upload file SHP
 async function uploadShapefile() {
   const formData = new FormData();
-  formData.append("shp", shapefileData.value.shp);
-  if (shapefileData.value.shx) formData.append("shx", shapefileData.value.shx);
-  formData.append("dbf", shapefileData.value.dbf);
+  formData.append("zip", zipFile.value);
 
   try {
-    const res = await fetch("http://localhost:3001/api/upload-shp", {
+    const res = await fetch("http://localhost:3001/api/upload-zip", {
       method: "POST",
       body: formData,
     });
@@ -83,7 +70,7 @@ async function uploadShapefile() {
     if (!res.ok) {
       const errorText = await res.text();
       console.error("❌ Upload error detail:", errorText);
-      alert(`Gagal upload SHP.\nDetail: ${errorText}`);
+      alert(`Gagal upload ZIP.\nDetail: ${errorText}`);
       return;
     }
 
@@ -94,19 +81,18 @@ async function uploadShapefile() {
     regionInfo.value = region;
 
     if (!geojson || !geojson.features || geojson.features.length === 0) {
-      alert("Tidak ada data di dalam SHP.");
+      alert("Tidak ada data di dalam ZIP.");
       return;
     }
 
-    // Hapus semua layer sebelumnya (opsional)
-    drawnItems.value.clearLayers();
+    drawnItems.value.clearLayers(); // clear previous
 
     const layer = L.geoJSON(geojson);
     layer.addTo(drawnItems.value);
-    alert("✅ SHP berhasil ditampilkan di peta!");
+    alert("✅ ZIP berhasil ditampilkan di peta!");
   } catch (err) {
     console.error("❌ Upload gagal (exception):", err);
-    alert("Gagal upload SHP (network error).");
+    alert("Gagal upload ZIP (network error).");
   }
 }
 
