@@ -1,4 +1,5 @@
 version: "3.9"
+
 services:
   backend:
     build:
@@ -27,8 +28,8 @@ services:
       - polygon-network
 
   postgres:
-    image: postgres:14
-    container_name: polygon-postgres
+    image: postgis/postgis
+    container_name: postgis
     restart: always
     ports:
       - "5432:5432"
@@ -38,7 +39,20 @@ services:
       POSTGRES_DB: region_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - polygon-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - "5050:80" # akses di http://localhost:5050
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    depends_on:
+      - postgres
     networks:
       - polygon-network
 

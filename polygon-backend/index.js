@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { sequelize } = require("./models");
 
-const polygonRoutes = require("./routes/polygonRoutes");
+const positionRoutes = require("./routes/positionRoutes");
 const exportRoutes = require("./routes/exportRoutes");
 const uploadShapefile = require("./routes/uploadShapefile");
 
@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routing utama
-app.use("/api/polygons", polygonRoutes); // untuk GET/POST polygon
+app.use("/api/positions", positionRoutes); // untuk GET/POST polygon
 app.use("/api/export", exportRoutes); // untuk download SHP
 app.use("/api/upload-zip", uploadShapefile);
 
