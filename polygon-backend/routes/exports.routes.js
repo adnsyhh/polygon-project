@@ -6,7 +6,7 @@ const { Polygon } = require("../models");
 
 const router = express.Router();
 
-router.get("/export", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const polygons = await Polygon.findAll();
 

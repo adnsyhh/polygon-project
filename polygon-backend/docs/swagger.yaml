@@ -1,0 +1,562 @@
+openapi: 3.0.3
+info:
+  title: Polygon API
+  version: "1.0.0"
+  description: API untuk upload shapefile, menyimpan posisi, dan ekspor shapefile.
+
+servers:
+  - url: http://localhost:3001
+
+tags:
+  - name: Uploads
+    description: Upload shapefile (.zip) dan proses ke database
+  - name: Positions
+    description: CRUD untuk data posisi
+  - name: Exports
+    description: Ekspor data menjadi shapefile
+
+paths:
+  /api/uploadSHP:
+    post:
+      tags: [Uploads]
+      summary: Upload shapefile (.zip) dan daftarkan ke database
+      description: |
+        Menerima **multipart/form-data** dengan field file `zip`.
+        Mengembalikan objek dengan key numerik `"0"`, `"1"`, ... berisi hasil per polygon, serta metadata `status`, `keterangan`, `data_upload`, dan `area` total.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [zip]
+              properties:
+                zip:
+                  type: string
+                  format: binary
+                  description: File ZIP (`.shp` + `.dbf`, opsional `.shx`)
+      responses:
+        "200":
+          description: Berhasil mendaftarkan file ke database
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+              examples:
+                success:
+                  value:
+                    "0":
+                      overlap: false
+                      area: 2760.0775821959483
+                      region:
+                        result: true
+                        level: kabupaten
+                        region_id: 23123123
+                      geoJSON:
+                        type: Feature
+                        properties: {}
+                        geometry:
+                          type: Polygon
+                          coordinates:
+                            [
+                              [
+                                [107.7142, -6.97137],
+                                [107.71486, -6.97137],
+                                [107.71486, -6.97171],
+                                [107.7142, -6.97171],
+                                [107.7142, -6.97137],
+                              ],
+                            ]
+                      kek_ki: false
+                      pasal_181: false
+                      rdtr: false
+                    status: 200
+                    keterangan: Berhasil mendaftarkan file ke database
+                    data_upload:
+                      path: public/upload/shp/P-202505201823103597482/R-202508061705261262238/tegalluar-A.zip
+                      id_upload: U-202508061706094825083
+                      nama_file: tegalluar-A.zip
+                    area: 2760.0775821959483
+        "400":
+          description: Bad Request (mis. tidak ada field zip atau bukan file .zip)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missingZip:
+                  value:
+                    status: 400
+                    error: Bad Request
+                    message: "File .zip wajib diunggah"
+        "500":
+          description: Kesalahan server saat proses ekstrak/konversi/simpan DB
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                serverError:
+                  value:
+                    status: 500
+                    error: Internal Server Error
+                    message: "Gagal proses shapefile"
+                    detail: "Detail error internal"
+
+  /api/positions:
+    get:
+      tags: [Positions]
+      summary: Ambil semua positions
+      responses:
+        "200":
+          description: Daftar data positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Position"
+    post:
+      tags: [Positions]
+      summary: Buat data position baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePositionRequest"
+      responses:
+        "201":
+          description: Posisi berhasil disimpan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Posisi berhasil disimpan
+                  data:
+                    $ref: "#/components/schemas/Position"
+        "400":
+          description: Format GeoJSON Polygon tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidGeoJSON:
+                  value:
+                    status: 400
+                    error: Bad Request
+                    message: "Format GeoJSON Polygon tidak valid"
+        "500":
+          description: Gagal menyimpan posisi (DB error)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/positions/{id}:
+    get:
+      tags: [Positions]
+      summary: Ambil position berdasarkan ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Data ditemukan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Position"
+        "404":
+          description: Data tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    status: 404
+                    error: Not Found
+                    message: "Data tidak ditemukan"
+        "500":
+          description: Gagal ambil data posisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags: [Positions]
+      summary: Update position berdasarkan ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePositionRequest"
+      responses:
+        "200":
+          description: Posisi berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "✅ Posisi berhasil diperbarui"
+        "404":
+          description: Data tidak ditemukan atau tidak ada perubahan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Gagal update posisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Positions]
+      summary: Hapus position berdasarkan ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Posisi berhasil dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "✅ Posisi berhasil dihapus"
+        "404":
+          description: Data tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Gagal hapus posisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # catatan: mount /api/export + route GET "/export" => path final "/api/export/export"
+  /api/exports:
+  get:
+    tags: [Exports]
+    summary: Ekspor semua polygon sebagai shapefile ZIP
+    responses:
+      "200":
+        description: File ZIP shapefile
+        content:
+          application/zip:
+            schema: { type: string, format: binary }
+      "500":
+        description: Gagal ekspor shapefile
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  schemas:
+    # === Upload ===
+    UploadResponse:
+      type: object
+      description: >
+        Objek dengan properti kunci numerik ("0","1",...) untuk tiap polygon.
+        Di root terdapat metadata `status`, `keterangan`, `data_upload`, dan `area` total.
+      additionalProperties:
+        $ref: "#/components/schemas/ResultItem"
+      properties:
+        status:
+          type: integer
+          example: 200
+        keterangan:
+          type: string
+          example: Berhasil mendaftarkan file ke database
+        data_upload:
+          $ref: "#/components/schemas/DataUpload"
+        area:
+          type: number
+          format: double
+          description: Total area semua polygon (m2)
+          example: 2760.0775821959483
+
+    ResultItem:
+      type: object
+      required: [overlap, area, region, geoJSON, kek_ki, pasal_181, rdtr]
+      properties:
+        overlap:
+          type: boolean
+          example: false
+        area:
+          type: number
+          format: double
+          description: Luas polygon (m2)
+          example: 2760.0775821959483
+        region:
+          $ref: "#/components/schemas/RegionResult"
+        geoJSON:
+          $ref: "#/components/schemas/Feature"
+        kek_ki:
+          type: boolean
+          example: false
+        pasal_181:
+          type: boolean
+          example: false
+        rdtr:
+          type: boolean
+          example: false
+
+    RegionResult:
+      oneOf:
+        - type: object
+          properties:
+            result:
+              type: boolean
+              enum: [false]
+          required: [result]
+          example:
+            result: false
+        - type: object
+          properties:
+            result:
+              type: boolean
+              enum: [true]
+            level:
+              type: string
+              enum: [kelurahan, kecamatan, kab_kota]
+              description: Level paling kecil yang ditemukan
+            region_id:
+              oneOf:
+                - type: integer
+                - type: string
+              description: ID wilayah
+          required: [result, level, region_id]
+          example:
+            result: true
+            level: kabupaten
+            region_id: 23123123
+      description: Hasil pencarian region berdasarkan centroid polygon.
+
+    DataUpload:
+      type: object
+      required: [path, id_upload, nama_file]
+      properties:
+        path:
+          type: string
+          example: public/upload/shp/P-202505201823103597482/R-202508061705261262238/tegalluar-A.zip
+        id_upload:
+          type: string
+          example: U-202508061706094825083
+        nama_file:
+          type: string
+          example: tegalluar-A.zip
+
+    # === Positions ===
+    Position:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        matra:
+          type: string
+          example: Darat
+        file_name:
+          type: string
+          example: tegalluar-A.zip
+        alamat:
+          type: string
+          nullable: true
+        provinsi:
+          type: string
+          nullable: true
+        kota_kabupaten:
+          type: string
+          nullable: true
+        kecamatan:
+          type: string
+          nullable: true
+        kelurahan:
+          type: string
+          nullable: true
+        kode_pos:
+          type: string
+          nullable: true
+        dalam_kawasan:
+          type: boolean
+          example: true
+        polygon:
+          $ref: "#/components/schemas/PolygonGeometry"
+        centroid:
+          type: object
+          description: GeoJSON Point
+          example:
+            type: Point
+            coordinates: [107.614, -6.9]
+        region_id:
+          oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePositionRequest:
+      type: object
+      required:
+        - matra
+        - polygon
+      properties:
+        matra:
+          type: string
+          example: Darat
+        file_name:
+          type: string
+          nullable: true
+        alamat:
+          type: string
+          nullable: true
+        provinsi:
+          type: string
+          nullable: true
+        kota_kabupaten:
+          type: string
+          nullable: true
+        kecamatan:
+          type: string
+          nullable: true
+        kelurahan:
+          type: string
+          nullable: true
+        kode_pos:
+          type: string
+          nullable: true
+        dalam_kawasan:
+          type: boolean
+          example: true
+        polygon:
+          $ref: "#/components/schemas/PolygonGeometry"
+
+    UpdatePositionRequest:
+      type: object
+      description: Field opsional sesuai yang ingin diperbarui
+      properties:
+        matra:
+          type: string
+        file_name:
+          type: string
+        alamat:
+          type: string
+          nullable: true
+        provinsi:
+          type: string
+          nullable: true
+        kota_kabupaten:
+          type: string
+          nullable: true
+        kecamatan:
+          type: string
+          nullable: true
+        kelurahan:
+          type: string
+          nullable: true
+        kode_pos:
+          type: string
+          nullable: true
+        dalam_kawasan:
+          type: boolean
+        polygon:
+          $ref: "#/components/schemas/PolygonGeometry"
+        centroid:
+          type: object
+        region_id:
+          oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+
+    # === GeoJSON Minimal ===
+    Feature:
+      type: object
+      required: [type, properties, geometry]
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        properties:
+          type: object
+          additionalProperties: false
+          description: Kosong sesuai kontrak ({}).
+          example: {}
+        geometry:
+          $ref: "#/components/schemas/PolygonGeometry"
+
+    PolygonGeometry:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+        coordinates:
+          type: array
+          description: Koordinat GeoJSON [ [ [lng, lat], ... ] ]
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+
+    # === Error ===
+    ErrorResponse:
+      type: object
+      required: [status, error, message]
+      properties:
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: "File .zip wajib diunggah"
+        detail:
+          type: string
+          nullable: true

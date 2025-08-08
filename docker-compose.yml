@@ -15,6 +15,7 @@ services:
       - polygon-network
     volumes:
       - ./polygon-backend/uploads:/app/uploads
+      - ./docs:/app/docs
 
   frontend:
     build:
@@ -53,6 +54,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin123
     depends_on:
       - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - polygon-network
 
@@ -62,3 +65,4 @@ networks:
 
 volumes:
   postgres_data:
+  pgadmin_data:
