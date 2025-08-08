@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 // const fileUpload = require("express-fileupload");
@@ -5,7 +6,7 @@ const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 
 const apiRoutes = require("./routes");
-const swaggerDocument = YAML.load("./docs/swagger.yaml");
+const swaggerDocument = YAML.load(path.join(__dirname, "docs", "swagger.yaml"));
 const errorHandler = require("./middlewares/errorHandler");
 const notFoundHandler = require("./middlewares/notFoundHandler");
 

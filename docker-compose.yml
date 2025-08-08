@@ -15,7 +15,6 @@ services:
       - polygon-network
     volumes:
       - ./polygon-backend/uploads:/app/uploads
-      - ./docs:/app/docs
 
   frontend:
     build:
